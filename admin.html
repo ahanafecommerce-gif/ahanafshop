@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>আহানাফশপ - Admin Panel</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--orange:#f57224;--dark:#1a1a2e;--green:#00a650;--red:#e53935;--border:#e0e0e0;}
+body{font-family:'Segoe UI',sans-serif;background:#f5f5f5;color:#212121;}
+
+/* LOGIN */
+.login-screen{position:fixed;inset:0;background:linear-gradient(135deg,#1a1a2e,#f57224);display:flex;align-items:center;justify-content:center;z-index:9999;}
+.login-box{background:#fff;border-radius:12px;padding:36px;width:90%;max-width:380px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.login-logo{font-size:28px;font-weight:800;color:var(--orange);margin-bottom:6px;}
+.login-logo em{color:#1a1a2e;font-style:normal;}
+.login-box p{font-size:13px;color:#757575;margin-bottom:24px;}
+.login-box input{width:100%;border:1.5px solid var(--border);border-radius:6px;padding:11px 14px;font-size:14px;outline:none;margin-bottom:12px;transition:border-color .2s;}
+.login-box input:focus{border-color:var(--orange);}
+.login-btn{width:100%;background:var(--orange);color:#fff;border:none;padding:12px;border-radius:6px;font-size:15px;font-weight:700;cursor:pointer;}
+.login-btn:hover{background:#d4601a;}
+.login-err{color:var(--red);font-size:12px;margin-top:8px;display:none;}
+
+/* ADMIN LAYOUT */
+.admin{display:none;}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:240px;background:var(--dark);color:#fff;padding:0;z-index:100;}
+.sb-logo{padding:20px;font-size:18px;font-weight:800;color:var(--orange);border-bottom:1px solid rgba(255,255,255,.1);}
+.sb-logo em{color:#fff;font-style:normal;}
+.sb-menu{padding:12px 0;}
+.sb-item{display:flex;align-items:center;gap:10px;padding:12px 20px;cursor:pointer;font-size:14px;color:rgba(255,255,255,.7);transition:all .2s;}
+.sb-item:hover,.sb-item.active{background:rgba(245,114,36,.2);color:#fff;border-right:3px solid var(--orange);}
+.sb-item span{font-size:18px;}
+.sb-logout{position:absolute;bottom:0;left:0;right:0;padding:16px 20px;border-top:1px solid rgba(255,255,255,.1);cursor:pointer;font-size:13px;color:rgba(255,255,255,.6);display:flex;align-items:center;gap:8px;}
+.sb-logout:hover{color:#fff;}
+
+/* MAIN */
+.main{margin-left:240px;padding:24px;min-height:100vh;}
+.page-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;}
+.page-title{font-size:22px;font-weight:700;}
+.btn{border:none;padding:9px 18px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-orange{background:var(--orange);color:#fff;}
+.btn-orange:hover{background:#d4601a;}
+.btn-green{background:var(--green);color:#fff;}
+.btn-red{background:var(--red);color:#fff;}
+.btn-gray{background:#f0f0f0;color:#333;}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+.stat-card{background:#fff;border-radius:8px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.stat-icon{font-size:28px;margin-bottom:10px;}
+.stat-val{font-size:26px;font-weight:800;color:var(--orange);}
+.stat-lbl{font-size:12px;color:#757575;margin-top:4px;}
+
+/* TABS */
+.tab-section{display:none;}
+.tab-section.active{display:block;}
+
+/* SETUP CARD */
+.setup-card{background:#fff;border-radius:8px;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:20px;}
+.setup-card h3{font-size:16px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.step{display:flex;gap:14px;margin-bottom:20px;padding:16px;background:#f9f9f9;border-radius:8px;border-left:4px solid var(--orange);}
+.step-num{background:var(--orange);color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;}
+.step-info h4{font-size:14px;font-weight:700;margin-bottom:4px;}
+.step-info p{font-size:13px;color:#757575;line-height:1.6;}
+.step-info a{color:var(--orange);font-weight:600;}
+.step-info code{background:#e8e8e8;padding:2px 8px;border-radius:4px;font-size:12px;font-family:monospace;}
+.fg{margin-bottom:14px;}
+.fg label{display:block;font-size:12.5px;font-weight:600;margin-bottom:5px;color:#757575;}
+.fg input,.fg select{width:100%;border:1.5px solid var(--border);border-radius:6px;padding:9px 12px;font-size:14px;outline:none;transition:border-color .2s;}
+.fg input:focus{border-color:var(--orange);}
+.test-result{margin-top:12px;padding:12px;border-radius:6px;font-size:13px;display:none;}
+.test-ok{background:#e8f5e9;color:var(--green);}
+.test-err{background:#ffebee;color:var(--red);}
+
+/* PRODUCT TABLE */
+.prod-table-wrap{background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden;}
+.prod-table-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.table{width:100%;border-collapse:collapse;}
+.table th{padding:12px 16px;text-align:left;font-size:12px;font-weight:700;color:#757575;text-transform:uppercase;background:#f9f9f9;border-bottom:1px solid var(--border);}
+.table td{padding:12px 16px;border-bottom:1px solid #f5f5f5;font-size:13.5px;vertical-align:middle;}
+.table tr:hover td{background:#fffaf7;}
+.prod-thumb{width:48px;height:48px;border-radius:6px;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:26px;}
+.status-badge{padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;}
+.status-on{background:#e8f5e9;color:var(--green);}
+.status-off{background:#ffebee;color:var(--red);}
+.action-btns{display:flex;gap:6px;}
+.action-btn{border:none;width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;}
+.edit-btn{background:#fff3e0;color:var(--orange);}
+.del-btn{background:#ffebee;color:var(--red);}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-bg.on{display:flex;}
+.modal{background:#fff;border-radius:10px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;}
+.modal-head{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.modal-head h3{font-size:16px;font-weight:700;}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:#757575;}
+.modal-body{padding:20px;}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;}
+.img-preview{width:100%;height:160px;background:#f9f9f9;border:2px dashed var(--border);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;margin-bottom:14px;font-size:32px;transition:border-color .2s;}
+.img-preview:hover{border-color:var(--orange);}
+.img-preview img{width:100%;height:100%;object-fit:contain;border-radius:6px;}
+.img-note{font-size:11px;color:#757575;margin-top:6px;}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+/* GOOGLE SHEET STATUS */
+.sheet-status{display:flex;align-items:center;gap:8px;font-size:13px;padding:10px 16px;border-radius:6px;margin-bottom:16px;}
+.sheet-connected{background:#e8f5e9;color:var(--green);}
+.sheet-disconnected{background:#fff3e0;color:#f57224;}
+.dot{width:8px;height:8px;border-radius:50%;background:currentColor;}
+
+/* ORDERS */
+.order-card{background:#fff;border-radius:8px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:12px;border-left:4px solid var(--orange);}
+.order-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.order-id{font-weight:700;font-size:14px;}
+.order-body{font-size:13px;color:#757575;line-height:1.8;}
+
+/* INSTRUCTIONS */
+.instr{background:linear-gradient(135deg,#fff3e0,#fff8f0);border:1px solid #ffe0b2;border-radius:8px;padding:16px;margin-bottom:16px;}
+.instr h4{font-size:14px;font-weight:700;color:var(--orange);margin-bottom:8px;}
+.instr p,.instr li{font-size:13px;color:#555;line-height:1.8;}
+.instr ol{padding-left:18px;}
+.copy-btn{background:var(--orange);color:#fff;border:none;padding:4px 12px;border-radius:4px;font-size:12px;cursor:pointer;margin-left:8px;}
+
+@media(max-width:768px){
+  .sidebar{width:100%;height:auto;position:relative;}
+  .main{margin-left:0;}
+  .stats{grid-template-columns:repeat(2,1fr);}
+  .fg-row{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">আহানাফ<em>শপ</em></div>
+    <p>Admin Panel — শুধুমাত্র অ্যাডমিনের জন্য</p>
+    <input type="text" id="adminUser" placeholder="ইউজারনেম" value="admin">
+    <input type="password" id="adminPass" placeholder="পাসওয়ার্ড" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">🔐 লগইন করুন</button>
+    <div class="login-err" id="loginErr">❌ ইউজারনেম বা পাসওয়ার্ড ভুল!</div>
+    <p style="font-size:11px;color:#bbb;margin-top:14px;">ডিফল্ট: admin / ahanaf2024</p>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="admin" id="adminPanel">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-logo">আহানাফ<em>শপ</em> ⚙️</div>
+    <div class="sb-menu">
+      <div class="sb-item active" onclick="showTab('dashboard')"><span>📊</span> ড্যাশবোর্ড</div>
+      <div class="sb-item" onclick="showTab('products')"><span>📦</span> পণ্য ব্যবস্থাপনা</div>
+      <div class="sb-item" onclick="showTab('setup')"><span>⚙️</span> Google Sheets সেটআপ</div>
+      <div class="sb-item" onclick="showTab('orders')"><span>🛒</span> অর্ডার</div>
+      <div class="sb-item" onclick="window.open('https://ahanafshop.netlify.app','_blank')"><span>🌐</span> সাইট দেখুন</div>
+    </div>
+    <div class="sb-logout" onclick="doLogout()">🚪 লগআউট</div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div class="tab-section active" id="tab-dashboard">
+      <div class="page-head">
+        <div class="page-title">📊 ড্যাশবোর্ড</div>
+        <span style="font-size:13px;color:#757575;" id="lastSync">সর্বশেষ আপডেট: এখনই</span>
+      </div>
+      <div class="stats">
+        <div class="stat-card"><div class="stat-icon">📦</div><div class="stat-val" id="statProds">0</div><div class="stat-lbl">মোট পণ্য</div></div>
+        <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-val" id="statActive">0</div><div class="stat-lbl">সক্রিয় পণ্য</div></div>
+        <div class="stat-card"><div class="stat-icon">🔥</div><div class="stat-val" id="statDisc">0</div><div class="stat-lbl">ছাড়ের পণ্য</div></div>
+        <div class="stat-card"><div class="stat-icon">🆕</div><div class="stat-val" id="statNew">0</div><div class="stat-lbl">নতুন পণ্য</div></div>
+      </div>
+      <div class="setup-card">
+        <h3>🚀 দ্রুত গাইড</h3>
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-info"><h4>Google Sheets সেটআপ করুন</h4><p>⚙️ Google Sheets সেটআপ ট্যাবে যান এবং নির্দেশনা অনুসরণ করুন।</p></div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-info"><h4>পণ্য যোগ করুন</h4><p>📦 পণ্য ব্যবস্থাপনা ট্যাবে গিয়ে নতুন পণ্য যোগ করুন।</p></div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-info"><h4>সাইটে দেখুন</h4><p>🌐 সাইড মেনু থেকে "সাইট দেখুন" ক্লিক করুন।</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUCTS -->
+    <div class="tab-section" id="tab-products">
+      <div class="page-head">
+        <div class="page-title">📦 পণ্য ব্যবস্থাপনা</div>
+        <button class="btn btn-orange" onclick="openAddModal()">+ নতুন পণ্য যোগ করুন</button>
+      </div>
+
+      <div id="sheetStatusBar" class="sheet-status sheet-disconnected">
+        <span class="dot"></span>
+        <span id="sheetStatusText">Google Sheets সংযুক্ত নেই — ⚙️ সেটআপ করুন</span>
+      </div>
+
+      <div class="prod-table-wrap">
+        <div class="prod-table-head">
+          <span style="font-size:14px;font-weight:600;">পণ্য তালিকা (<span id="prodCount">0</span>টি)</span>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-gray" onclick="loadProducts()">🔄 রিফ্রেশ</button>
+            <button class="btn btn-green" onclick="syncToSheet()">☁️ Sheet এ সেভ করুন</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>পণ্য</th>
+                <th>দাম</th>
+                <th>আসল দাম</th>
+                <th>ক্যাটাগরি</th>
+                <th>COD</th>
+                <th>স্ট্যাটাস</th>
+                <th>অ্যাকশন</th>
+              </tr>
+            </thead>
+            <tbody id="prodTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETUP -->
+    <div class="tab-section" id="tab-setup">
+      <div class="page-head">
+        <div class="page-title">⚙️ Google Sheets সেটআপ</div>
+      </div>
+
+      <div class="instr">
+        <h4>📋 কিভাবে কাজ করে?</h4>
+        <p>Google Sheets কে ডেটাবেজ হিসেবে ব্যবহার করা হবে। আপনি এখান থেকে পণ্য যোগ/এডিট করলে Google Sheet এ সেভ হবে এবং সাইটে দেখাবে।</p>
+      </div>
+
+      <div class="setup-card">
+        <h3>📋 ধাপ ১ — Google Sheet তৈরি করুন</h3>
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-info">
+            <h4>নতুন Google Sheet খুলুন</h4>
+            <p><a href="https://sheets.new" target="_blank">sheets.new</a> এ যান → নতুন Sheet তৈরি হবে</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-info">
+            <h4>প্রথম সারিতে এই হেডার লিখুন:</h4>
+            <p><code>id | name | price | old_price | discount | category | icon | cod | badge | active</code></p>
+            <button class="copy-btn" onclick="copyHeaders()">কপি করুন</button>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-info">
+            <h4>Share করুন → Anyone with link → Viewer</h4>
+            <p>উপরে Share বাটন → General access → Anyone with the link → Viewer</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="setup-card">
+        <h3>🔗 ধাপ ২ — Sheet ID যোগ করুন</h3>
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-info">
+            <h4>Sheet URL থেকে ID কপি করুন</h4>
+            <p>URL: <code>docs.google.com/spreadsheets/d/<strong>এই অংশটুকু</strong>/edit</code></p>
+          </div>
+        </div>
+        <div class="fg" style="margin-top:16px;">
+          <label>Google Sheet ID পেস্ট করুন</label>
+          <input type="text" id="sheetId" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms">
+        </div>
+        <button class="btn btn-orange" onclick="saveSheetId()" style="width:100%;padding:11px;">✅ সংযুক্ত করুন</button>
+        <div class="test-result" id="testResult"></div>
+      </div>
+
+      <div class="setup-card">
+        <h3>📱 ধাপ ৩ — Apps Script (পণ্য আপডেট করতে)</h3>
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-info">
+            <h4>Google Sheet এ যান → Extensions → Apps Script</h4>
+            <p>নিচের কোড পেস্ট করুন এবং Deploy করুন:</p>
+            <button class="copy-btn" onclick="copyScript()">Script কপি করুন</button>
+          </div>
+        </div>
+        <div class="fg" style="margin-top:16px;">
+          <label>Apps Script Web App URL</label>
+          <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/...">
+        </div>
+        <button class="btn btn-green" onclick="saveScriptUrl()" style="width:100%;padding:11px;">✅ সেভ করুন</button>
+      </div>
+    </div>
+
+    <!-- ORDERS -->
+    <div class="tab-section" id="tab-orders">
+      <div class="page-head">
+        <div class="page-title">🛒 অর্ডার তালিকা</div>
+        <button class="btn btn-gray" onclick="loadOrders()">🔄 রিফ্রেশ</button>
+      </div>
+      <div class="instr">
+        <h4>💡 অর্ডার কিভাবে পাবেন?</h4>
+        <ol>
+          <li>Google Sheet এ একটি "Orders" নামে নতুন শিট যোগ করুন</li>
+          <li>সাইটে চেকআউট করলে অর্ডার সেই শিটে সেভ হবে</li>
+          <li>এখান থেকে সব অর্ডার দেখতে পারবেন</li>
+        </ol>
+      </div>
+      <div id="ordersContainer">
+        <div style="text-align:center;padding:40px;color:#757575;">
+          <div style="font-size:48px;margin-bottom:12px;">📋</div>
+          <p>Google Sheets সেটআপ করলে অর্ডার এখানে দেখাবে</p>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /admin -->
+
+<!-- ADD/EDIT PRODUCT MODAL -->
+<div class="modal-bg" id="prodModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">✨ নতুন পণ্য যোগ করুন</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="img-preview" id="imgPreview" onclick="document.getElementById('imgFile').click()">
+        <div id="imgPlaceholder">📸<br><span style="font-size:13px;color:#757575;margin-top:6px;display:block">ছবি আপলোড করুন</span></div>
+      </div>
+      <input type="file" id="imgFile" accept="image/*" style="display:none" onchange="previewImg(this)">
+      <p class="img-note">💡 ছবি না থাকলে ইমোজি ব্যবহার হবে</p>
+
+      <div class="fg"><label>পণ্যের ইমোজি (ছবি না থাকলে)</label>
+        <select id="prodIcon">
+          <option value="📱">📱 মোবাইল/ইলেকট্রনিক্স</option>
+          <option value="👕">👕 পুরুষ পোশাক</option>
+          <option value="👗">👗 নারী পোশাক</option>
+          <option value="🏡">🏡 গৃহস্থালি</option>
+          <option value="💄">💄 সৌন্দর্য</option>
+          <option value="📚">📚 বই</option>
+          <option value="🧸">🧸 শিশু</option>
+          <option value="⚽">⚽ স্পোর্টস</option>
+          <option value="🍎">🍎 খাদ্য</option>
+          <option value="💻">💻 কম্পিউটার</option>
+          <option value="🎧">🎧 হেডফোন</option>
+          <option value="⌚">⌚ ঘড়ি</option>
+          <option value="👟">👟 জুতা</option>
+          <option value="👜">👜 ব্যাগ</option>
+        </select>
+      </div>
+      <div class="fg"><label>পণ্যের নাম *</label><input type="text" id="prodName" placeholder="পণ্যের নাম লিখুন"></div>
+      <div class="fg-row">
+        <div class="fg"><label>বিক্রয় মূল্য (৳) *</label><input type="number" id="prodPrice" placeholder="999"></div>
+        <div class="fg"><label>আসল মূল্য (৳)</label><input type="number" id="prodOld" placeholder="1500"></div>
+      </div>
+      <div class="fg-row">
+        <div class="fg"><label>ক্যাটাগরি</label>
+          <select id="prodCat">
+            <option value="ইলেকট্রনিক্স">ইলেকট্রনিক্স</option>
+            <option value="পোশাক">পোশাক</option>
+            <option value="গৃহস্থালি">গৃহস্থালি</option>
+            <option value="সৌন্দর্য">সৌন্দর্য</option>
+            <option value="বই">বই</option>
+            <option value="শিশু">শিশু</option>
+            <option value="স্পোর্টস">স্পোর্টস</option>
+          </select>
+        </div>
+        <div class="fg"><label>ব্যাজ</label>
+          <select id="prodBadge">
+            <option value="disc">ছাড় (-X%)</option>
+            <option value="new">নতুন</option>
+            <option value="hot">হট</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="prodCod" checked style="width:auto;accent-color:var(--orange);">
+          💵 ক্যাশ অন ডেলিভারি আছে
+        </label>
+      </div>
+      <div class="fg">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="prodActive" checked style="width:auto;accent-color:var(--orange);">
+          ✅ সক্রিয় (সাইটে দেখাবে)
+        </label>
+      </div>
+      <input type="hidden" id="editId" value="">
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-gray" onclick="closeModal()">বাতিল</button>
+      <button class="btn btn-orange" onclick="saveProd()">💾 সেভ করুন</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" style="position:fixed;bottom:20px;right:20px;background:#323232;color:#fff;padding:11px 18px;border-radius:6px;font-size:13.5px;z-index:3000;transform:translateY(70px);opacity:0;transition:all .3s;box-shadow:0 4px 16px rgba(0,0,0,.25);max-width:300px;"></div>
+
+<script>
+// ── CONFIG ──
+const ADMIN_USER = 'admin';
+const ADMIN_PASS = 'ahanaf2024';
+const STORAGE_KEY = 'ahanafshop_products';
+const SHEET_ID_KEY = 'ahanafshop_sheet_id';
+const SCRIPT_URL_KEY = 'ahanafshop_script_url';
+
+let products = [];
+let editingId = null;
+let imgBase64 = null;
+
+// ── LOGIN ──
+function doLogin(){
+  const u = document.getElementById('adminUser').value;
+  const p = document.getElementById('adminPass').value;
+  if(u===ADMIN_USER && p===ADMIN_PASS){
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('adminPanel').style.display='flex';
+    loadProducts();
+    checkSheetConnection();
+  } else {
+    document.getElementById('loginErr').style.display='block';
+  }
+}
+function doLogout(){
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('adminPanel').style.display='none';
+}
+
+// ── TABS ──
+function showTab(name){
+  document.querySelectorAll('.tab-section').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// ── PRODUCTS ──
+function loadProducts(){
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if(saved){
+    products = JSON.parse(saved);
+  } else {
+    // Default products
+    products = [
+      {id:1,name:"Samsung Galaxy A54 5G",price:32999,old:42000,disc:21,rating:4.5,rev:234,icon:"📱",cat:"ইলেকট্রনিক্স",cod:true,badge:"disc",active:true,img:""},
+      {id:2,name:"ব্লুটুথ হেডফোন",price:2499,old:3999,disc:37,rating:4.3,rev:189,icon:"🎧",cat:"ইলেকট্রনিক্স",cod:true,badge:"disc",active:true,img:""},
+      {id:3,name:"পুরুষের কটন পাঞ্জাবি",price:899,old:1200,disc:25,rating:4.7,rev:412,icon:"👘",cat:"পোশাক",cod:true,badge:"new",active:true,img:""},
+    ];
+    saveProducts();
+  }
+  renderTable();
+  updateStats();
+}
+
+function saveProducts(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+}
+
+function renderTable(){
+  const tbody = document.getElementById('prodTableBody');
+  document.getElementById('prodCount').textContent = products.length;
+  if(products.length===0){
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:#757575">কোনো পণ্য নেই। নতুন পণ্য যোগ করুন।</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = products.map(p=>`
+    <tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="prod-thumb">${p.img?`<img src="${p.img}" style="width:100%;height:100%;object-fit:cover;border-radius:4px;">`:`${p.icon}`}</div>
+          <div>
+            <div style="font-weight:600;font-size:13px">${p.name}</div>
+            <div style="font-size:11px;color:#757575">${p.cat}</div>
+          </div>
+        </div>
+      </td>
+      <td style="font-weight:700;color:#f57224">৳${Number(p.price).toLocaleString()}</td>
+      <td style="text-decoration:line-through;color:#bbb">৳${Number(p.old).toLocaleString()}</td>
+      <td>${p.cat}</td>
+      <td>${p.cod?'<span style="color:#00a650;font-weight:700">✅</span>':'<span style="color:#bbb">❌</span>'}</td>
+      <td><span class="status-badge ${p.active?'status-on':'status-off'}">${p.active?'সক্রিয়':'বন্ধ'}</span></td>
+      <td>
+        <div class="action-btns">
+          <button class="action-btn edit-btn" onclick="editProd(${p.id})" title="এডিট">✏️</button>
+          <button class="action-btn del-btn" onclick="delProd(${p.id})" title="মুছুন">🗑️</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function updateStats(){
+  document.getElementById('statProds').textContent = products.length;
+  document.getElementById('statActive').textContent = products.filter(p=>p.active).length;
+  document.getElementById('statDisc').textContent = products.filter(p=>p.badge==='disc').length;
+  document.getElementById('statNew').textContent = products.filter(p=>p.badge==='new').length;
+}
+
+// ── ADD/EDIT MODAL ──
+function openAddModal(){
+  editingId = null; imgBase64 = null;
+  document.getElementById('modalTitle').textContent = '✨ নতুন পণ্য যোগ করুন';
+  document.getElementById('prodName').value='';
+  document.getElementById('prodPrice').value='';
+  document.getElementById('prodOld').value='';
+  document.getElementById('prodCod').checked=true;
+  document.getElementById('prodActive').checked=true;
+  document.getElementById('prodBadge').value='disc';
+  document.getElementById('imgPlaceholder').style.display='flex';
+  const existing = document.getElementById('imgPreview').querySelector('img');
+  if(existing) existing.remove();
+  document.getElementById('prodModal').classList.add('on');
+}
+
+function editProd(id){
+  const p = products.find(x=>x.id===id);
+  if(!p) return;
+  editingId = id;
+  document.getElementById('modalTitle').textContent = '✏️ পণ্য এডিট করুন';
+  document.getElementById('prodName').value = p.name;
+  document.getElementById('prodPrice').value = p.price;
+  document.getElementById('prodOld').value = p.old;
+  document.getElementById('prodCat').value = p.cat;
+  document.getElementById('prodBadge').value = p.badge;
+  document.getElementById('prodIcon').value = p.icon;
+  document.getElementById('prodCod').checked = p.cod;
+  document.getElementById('prodActive').checked = p.active;
+  imgBase64 = p.img || null;
+  const preview = document.getElementById('imgPreview');
+  if(p.img){
+    document.getElementById('imgPlaceholder').style.display='none';
+    let img = preview.querySelector('img');
+    if(!img){ img=document.createElement('img'); preview.appendChild(img); }
+    img.src = p.img;
+  }
+  document.getElementById('prodModal').classList.add('on');
+}
+
+function saveProd(){
+  const name = document.getElementById('prodName').value.trim();
+  const price = Number(document.getElementById('prodPrice').value);
+  const old = Number(document.getElementById('prodOld').value) || price;
+  if(!name){ showToast('❌ পণ্যের নাম দিন!'); return; }
+  if(!price){ showToast('❌ দাম দিন!'); return; }
+  const disc = old>price ? Math.round((old-price)/old*100) : 0;
+  const prod = {
+    id: editingId || Date.now(),
+    name, price, old, disc,
+    rating: 4.5, rev: 0,
+    icon: document.getElementById('prodIcon').value,
+    cat: document.getElementById('prodCat').value,
+    cod: document.getElementById('prodCod').checked,
+    badge: document.getElementById('prodBadge').value,
+    active: document.getElementById('prodActive').checked,
+    img: imgBase64 || ''
+  };
+  if(editingId){
+    const idx = products.findIndex(x=>x.id===editingId);
+    products[idx] = prod;
+    showToast('✅ পণ্য আপডেট হয়েছে!');
+  } else {
+    products.push(prod);
+    showToast('✅ নতুন পণ্য যোগ হয়েছে!');
+  }
+  saveProducts();
+  renderTable();
+  updateStats();
+  closeModal();
+  generateShopJS();
+}
+
+function delProd(id){
+  if(!confirm('এই পণ্য মুছে ফেলবেন?')) return;
+  products = products.filter(x=>x.id!==id);
+  saveProducts();
+  renderTable();
+  updateStats();
+  showToast('🗑️ পণ্য মুছে ফেলা হয়েছে');
+}
+
+function closeModal(){
+  document.getElementById('prodModal').classList.remove('on');
+}
+
+// ── IMAGE PREVIEW ──
+function previewImg(input){
+  const file = input.files[0];
+  if(!file) return;
+  if(file.size > 500000){ showToast('❌ ছবি ৫০০KB এর বেশি হবে না!'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    imgBase64 = e.target.result;
+    const preview = document.getElementById('imgPreview');
+    document.getElementById('imgPlaceholder').style.display='none';
+    let img = preview.querySelector('img');
+    if(!img){ img=document.createElement('img'); img.style.cssText='width:100%;height:100%;object-fit:contain;'; preview.appendChild(img); }
+    img.src = imgBase64;
+    showToast('✅ ছবি লোড হয়েছে!');
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── GOOGLE SHEETS ──
+function saveSheetId(){
+  const id = document.getElementById('sheetId').value.trim();
+  if(!id){ showToast('❌ Sheet ID দিন!'); return; }
+  localStorage.setItem(SHEET_ID_KEY, id);
+  checkSheetConnection();
+  showToast('✅ Google Sheet ID সেভ হয়েছে!');
+}
+
+function saveScriptUrl(){
+  const url = document.getElementById('scriptUrl').value.trim();
+  if(!url){ showToast('❌ Script URL দিন!'); return; }
+  localStorage.setItem(SCRIPT_URL_KEY, url);
+  showToast('✅ Script URL সেভ হয়েছে!');
+}
+
+function checkSheetConnection(){
+  const id = localStorage.getItem(SHEET_ID_KEY);
+  const statusBar = document.getElementById('sheetStatusBar');
+  const statusText = document.getElementById('sheetStatusText');
+  if(id){
+    statusBar.className = 'sheet-status sheet-connected';
+    statusText.textContent = '✅ Google Sheets সংযুক্ত আছে';
+    if(document.getElementById('sheetId')) document.getElementById('sheetId').value = id;
+  } else {
+    statusBar.className = 'sheet-status sheet-disconnected';
+    statusText.textContent = '⚠️ Google Sheets সংযুক্ত নেই — ⚙️ সেটআপ করুন';
+  }
+}
+
+async function syncToSheet(){
+  const scriptUrl = localStorage.getItem(SCRIPT_URL_KEY);
+  if(!scriptUrl){ showToast('❌ Apps Script URL সেটআপ করুন!'); showTab('setup'); return; }
+  showToast('☁️ Sheet এ আপলোড হচ্ছে...');
+  try {
+    await fetch(scriptUrl, {
+      method:'POST', mode:'no-cors',
+      body: JSON.stringify({action:'syncProducts', products})
+    });
+    showToast('✅ Google Sheet এ সেভ হয়েছে!');
+  } catch(e) {
+    showToast('❌ সংযোগ সমস্যা। Script URL চেক করুন।');
+  }
+}
+
+// ── GENERATE SHOP CODE ──
+function generateShopJS(){
+  // Products are saved to localStorage
+  // The main shop reads from this
+  const activeProds = products.filter(p=>p.active);
+  showToast(`✅ ${activeProds.length}টি পণ্য আপডেট হয়েছে`);
+}
+
+// ── COPY HELPERS ──
+function copyHeaders(){
+  navigator.clipboard.writeText('id	name	price	old_price	discount	category	icon	cod	badge	active');
+  showToast('✅ হেডার কপি হয়েছে! Sheet এ Ctrl+V করুন');
+}
+
+function copyScript(){
+  const script = `function doPost(e) {
+  var data = JSON.parse(e.postData.contents);
+  if(data.action === 'syncProducts') {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName('Products') || ss.insertSheet('Products');
+    sheet.clearContents();
+    sheet.appendRow(['id','name','price','old_price','discount','category','icon','cod','badge','active']);
+    data.products.forEach(function(p) {
+      sheet.appendRow([p.id,p.name,p.price,p.old,p.disc,p.cat,p.icon,p.cod,p.badge,p.active]);
+    });
+    return ContentService.createTextOutput('OK');
+  }
+}`;
+  navigator.clipboard.writeText(script);
+  showToast('✅ Script কপি হয়েছে!');
+}
+
+function loadOrders(){
+  showToast('🔄 অর্ডার লোড হচ্ছে...');
+}
+
+// ── TOAST ──
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.transform='translateY(0)'; t.style.opacity='1';
+  clearTimeout(t._t);
+  t._t = setTimeout(()=>{ t.style.transform='translateY(70px)'; t.style.opacity='0'; }, 3000);
+}
+
+// ── INIT ──
+document.getElementById('adminPass').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+</script>
+</body>
+</html>
